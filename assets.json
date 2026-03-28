@@ -1,0 +1,42 @@
+{
+    "images": {
+        "mountain": "assets/images/background/mountain.png",
+        "pine1": "assets/images/background/pine1.png",
+        "pine2": "assets/images/background/pine2.png",
+        "sky_cloud": "assets/images/background/sky_cloud.png",
+
+        "0": {"path": "assets/images/tile/0.png", "scale": [32, 32]},
+        "1": {"path": "assets/images/tile/1.png", "scale": [32, 32]},
+        "2": {"path": "assets/images/tile/2.png", "scale": [32, 32]},
+        "3": {"path": "assets/images/tile/3.png", "scale": [32, 32]},
+        "4": {"path": "assets/images/tile/4.png", "scale": [32, 32]},
+        "5": {"path": "assets/images/tile/5.png", "scale": [32, 32]},
+        "6": {"path": "assets/images/tile/6.png", "scale": [32, 32]},
+        "7": {"path": "assets/images/tile/7.png", "scale": [32, 32]},
+        "8": {"path": "assets/images/tile/8.png", "scale": [32, 32]},
+        "9": {"path": "assets/images/tile/9.png", "scale": [32, 32]},
+        "10": {"path": "assets/images/tile/10.png", "scale": [32, 32]},
+        "11": {"path": "assets/images/tile/11.png", "scale": [32, 32]},
+        "12": {"path": "assets/images/tile/12.png", "scale": [32, 32]},
+        "13": {"path": "assets/images/tile/13.png", "scale": [32, 32]},
+        "14": {"path": "assets/images/tile/14.png", "scale": [32, 32]},
+        "15": {"path": "assets/images/tile/15.png", "scale": [32, 32]},
+        "16": {"path": "assets/images/tile/16.png", "scale": [32, 32]},
+        "17": {"path": "assets/images/tile/17.png", "scale": [32, 32]},
+        "18": {"path": "assets/images/tile/18.png", "scale": [32, 32]},
+        "19": {"path": "assets/images/tile/19.png", "scale": [32, 32]},
+        "20": {"path": "assets/images/tile/20.png", "scale": [32, 32]},
+
+        "load_btn": "assets/images/load_btn.png",
+        "save_btn": "assets/images/load_btn.png"
+    },
+
+
+    "fonts": {
+        
+    },
+
+    "sound":{
+        
+    }
+}
