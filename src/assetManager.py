@@ -51,15 +51,17 @@ class AssetManager:
                 path = data 
                 scale = None 
 
+            is_sky = "sky" in path 
+
             full_image_path = BASE_DIR / path 
-            img = cls._safe_load_image(full_image_path)
+            img = cls._safe_load_image(full_image_path, use_alpha=not is_sky)
 
-        # scale only once, when loading 
-        if scale:
-            logger.info(f"scaling image {name}, scale: {scale[0]}, {scale[1]}")
-            img = pygame.transform.scale(img, (scale[0], scale[1]))
+            # scale only once, when loading 
+            if scale:
+                logger.info(f"scaling image {name}, scale: {scale[0]}, {scale[1]}")
+                img = pygame.transform.scale(img, (scale[0], scale[1]))
 
-        cls._images[name] = img 
+            cls._images[name] = img 
 
          # Load fonts 
         for name, data in config.get("fonts", {}).items():
@@ -69,16 +71,17 @@ class AssetManager:
         # Load sounds 
         for name, data in config.get("sounds", {}).items():
             full_path = BASE_DIR / data.get("path", "")
-            cls.fonts[name] = cls._safe_load_sound(full_path)
+            cls.sounds[name] = cls._safe_load_sound(full_path)
 
 
     @staticmethod 
-    def _safe_load_image(path):
+    def _safe_load_image(path, use_alpha=True):
         """Tries to load an image, returns a magenta square on failure"""
         try:
             # pygame.image requires a string, convert Path object 
             # .convert_alpha() improves performance for transparent images 
-            return pygame.image.load(str(path)).convert_alpha() 
+            img = pygame.image.load(str(path))
+            return img.convert_alpha() if use_alpha else img.convert() 
         
         except (pygame.error, FileNotFoundError, Exception) as e:
             logger.warning(f"Image missing: {path}")
@@ -99,7 +102,7 @@ class AssetManager:
         
     @staticmethod
     def _safe_load_sound(path):
-        """Tries to load a sound; returns ??? on failure"""
+        """Tries to load a sound; returns NullSound on failure"""
         try:
             # Check if mixer is initialized to avoid errors 
             if not pygame.mixer or not pygame.mixer.get_init():
@@ -121,3 +124,12 @@ class AssetManager:
     def get_sound(cls, name):
         """Retrieves a sound; returns NullSound if key doesn't exist"""
         return cls._sounds.get(name, NullSound())
+   
+
+    @classmethod
+    def __str__(cls):
+        summary = [f"AssetManager Status:"]
+        summary.append(f"  Images ({len(cls._images)}): {list(cls._images.keys())}")
+        summary.append(f"  Fonts  ({len(cls._fonts)}): {list(cls._fonts.keys())}")
+        summary.append(f"  Sounds ({len(cls._sounds)}): {list(cls._sounds.keys())}")
+        return "\n".join(summary)

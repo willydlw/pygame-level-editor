@@ -28,7 +28,7 @@
         "20": {"path": "assets/images/tile/20.png", "scale": [32, 32]},
 
         "load_btn": "assets/images/load_btn.png",
-        "save_btn": "assets/images/load_btn.png"
+        "save_btn": "assets/images/save_btn.png"
     },
 
 
