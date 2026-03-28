@@ -28,40 +28,56 @@ class Game():
         self.clock = pygame.time.Clock()
         self.running = True 
 
-        # Tile group 
-        self.background_tiles = pygame.sprite.Group() 
-        logging.info(f"Should self.tiles be a list or a sprite group?")
+        # scrolling 
+        self.scroll_left = False 
+        self.scroll_right = False 
+        self.scroll = 0 
+        self.scroll_speed = 1
 
         # Load assets 
         AssetManager.load_all(c.ASSETS_CONFIG_PATH)
         logging.info(f"Assets loaded!")
 
-        # Initialize background 
-        self.setup_background()
 
 
-    def setup_background(self):
-        sky_tile = Tile(0, 0, AssetManager.get_image("sky_cloud"), c.TILE_CODE_DICTIONARY.get("sky_cloud"))
-        self.background_tiles.add(sky_tile)
+    def draw_background(self):
+        # clear screen so images don't smear
+        self.screen.fill((144, 201, 120)) 
 
-        mountain_img = AssetManager.get_image("mountain")
+        # define the layers to draw in order (back to front)
+        # Sky moves at 0.1x scroll, front pines move at 0.8x scroll 
+        # Objects that are closer to use should scroll faster than
+        # those farther aways
+        layers = ["sky_cloud", "mountain", "pine1", "pine2"]
+        multipliers = [0.1, 0.4, 0.6, 0.8]
 
-        if mountain_img: 
-            m_height = mountain_img.get_height() 
-            mountain_tile = Tile(0, c.SCREEN_HEIGHT - m_height - 300, mountain_img, c.TILE_CODE_DICTIONARY.get("mountain"))
-            self.background_tiles.add(mountain_tile)
-        
-        pine1_img = AssetManager.get_image("pine1")
-        if pine1_img:
-            pine1_height = pine1_img.get_height() 
-            pine1_tile = Tile(0, c.SCREEN_HEIGHT - pine1_height - 150, pine1_img, c.TILE_CODE_DICTIONARY.get("pine1"))
-            self.background_tiles.add(pine1_tile)
-        
-        pine2_img = AssetManager.get_image("pine2")
-        if pine2_img:
-            pine2_height = pine2_img.get_height() 
-            pine2_tile = Tile(0, c.SCREEN_HEIGHT - pine2_height, pine2_img, c.TILE_CODE_DICTIONARY.get("pine2"))
-            self.background_tiles.add(pine2_tile)
+        for index, name in enumerate(layers):
+            img = AssetManager.get_image(name)
+            if not img: continue 
+
+            width = img.get_width() 
+            layer_scroll = self.scroll * multipliers[index]
+
+            # use modulo on the layer_scroll so this specific layer wraps
+            x_offset = layer_scroll % width 
+
+            # draw enough copies to cover the screen width 
+            for i in range(6):
+                self.screen.blit(img, ((i * width) -x_offset, self._get_layer_y(name, img)))
+
+
+    def _get_layer_y(self, name, img):
+        """Helper to get the vertical position for each layer"""
+        h = img.get_height() 
+        offsets = {
+            "sky_cloud": 0,
+            "mountain": c.SCREEN_HEIGHT - h - 300,
+            "pine1": c.SCREEN_HEIGHT - h - 150,
+            "pine2": c.SCREEN_HEIGHT - h
+        }
+
+        return offsets.get(name, 0)
+       
 
     
     def run(self):
@@ -71,9 +87,26 @@ class Game():
                 if event.type == pygame.QUIT:
                     self.running = False 
 
-            # game logic and drawing code goes here 
-            self.background_tiles.draw(self.screen)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.scroll_left = True 
+                    if event.key == pygame.K_RIGHT:
+                        self.scroll_right = True 
 
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT:
+                        self.scroll_left = False 
+                    if event.key == pygame.K_RIGHT:
+                        self.scroll_right = False
+
+            # limit scrolling to left to not go beyond x = 0 
+            if self.scroll_left == True and self.scroll > 0:
+                self.scroll -= 5 
+            if self.scroll_right == True and self.scroll < c.MAX_SCROLL:
+                self.scroll += 5
+
+            # draw the scrolling background
+            self.draw_background()
 
             # update the display 
             pygame.display.flip() 

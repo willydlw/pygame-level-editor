@@ -12,6 +12,11 @@ SIDE_MARGIN = 300
 FPS = 60            # frames per second
 
 
+# Limit level width 
+MAXIMUM_LEVEL_WIDTH = 2000
+MAX_SCROLL = MAXIMUM_LEVEL_WIDTH - SCREEN_WIDTH
+
+
 # Tile Codes - Backgroud >= 30
 
 TILE_CODE_DICTIONARY = {
