@@ -65,6 +65,19 @@ class Game():
             for i in range(6):
                 self.screen.blit(img, ((i * width) -x_offset, self._get_layer_y(name, img)))
 
+    def draw_grid(self):
+        # vertical lines (scrolling)
+        # only need to draw columns that are currently visible on screen
+        for col in range(c.MAX_COLS + 1):
+            x = col * c.TILE_SIZE - self.scroll 
+            if 0 <= x <= c.SCREEN_WIDTH:
+                pygame.draw.line(self.screen, (100, 100, 100), (x, 0), (x, c.SCREEN_HEIGHT))
+
+        # horizontal lines (Static)
+        for row in range(c.ROWS + 1):
+            y = row * c.TILE_SIZE
+            pygame.draw.line(self.screen, (100, 100, 100), (0, y), (c.SCREEN_WIDTH, y))
+
 
     def _get_layer_y(self, name, img):
         """Helper to get the vertical position for each layer"""
@@ -107,6 +120,7 @@ class Game():
 
             # draw the scrolling background
             self.draw_background()
+            self.draw_grid()
 
             # update the display 
             pygame.display.flip() 
