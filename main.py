@@ -41,6 +41,12 @@ def main():
     finally:
         pygame.quit()
 
+    print(f"TODO Ideas: 1. Multiple layers so you can put a tree on top of a grass tile? ")
+    print(f"2. Start buidling Game Engine that loads")
+    print(f"3. Choose log file save name.")
+    print(f"4. Refactor __init__ and other functions for readability?")
+    print(f"5. Probably should change class Game to name LevelEditor")
+
 
 if __name__ == "__main__":
     main()

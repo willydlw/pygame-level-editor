@@ -219,6 +219,17 @@ class Game():
                 self.show_confirm = False
                 self.input_lockout = True # prevent immediate painting when popup disappears
 
+    def draw_mouse_tool_tip(self):
+        mx, my = pygame.mouse.get_pos()
+        if mx < c.SCREEN_WIDTH and my < c.SCREEN_HEIGHT:
+            font = AssetManager.get_font("mario")
+            # Show tile number 
+            text = font.render(f"Tile: {self.current_tile}", True, (255, 255, 255))
+
+            # draw a small dark background for readability 
+            bg_rect = text.get_rect(topleft=(mx+15, my+15))
+            pygame.draw.rect(self.screen, (30, 30, 30), bg_rect.inflate(10, 5))
+            self.screen.blit(text, bg_rect)
 
     def draw_world(self):
         for y, row in enumerate(self.world_data):
@@ -327,7 +338,8 @@ class Game():
 
             # UI panels
             self.draw_side_panel()
-            self.draw_buttons()     # draw margin buttons 
+            self.draw_mouse_tool_tip()
+            self.draw_buttons()    
 
             # Popup (must be last to be on top)
             self.draw_confirm_popup()
