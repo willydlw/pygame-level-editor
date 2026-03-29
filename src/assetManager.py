@@ -73,7 +73,7 @@ class AssetManager:
             
             for i in range(count):
                 path = BASE_DIR / folder / f"{i}.png"
-                img = cls._safe_load_image(path)
+                img = cls._safe_load_image(path, True)
                 img = pygame.transform.scale(img, size)
                 cls._tiles.append(img)
 
@@ -104,7 +104,6 @@ class AssetManager:
     def _safe_load_image(path, use_alpha=True):
         """Tries to load an image, returns a magenta square on failure"""
         try:
-            # pygame.image requires a string, convert Path object 
             # .convert_alpha() improves performance for transparent images 
             img = pygame.image.load(str(path))
             return img.convert_alpha() if use_alpha else img.convert() 

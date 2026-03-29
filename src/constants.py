@@ -1,21 +1,27 @@
 # Configuration File Path
 ASSETS_CONFIG_PATH = "assets.json"
 
+# Assets Tile Size 
+TILE_SIZE = 32 
 
-# Game Window
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 640
-LOWER_MARGIN = 100 
-SIDE_MARGIN = 300 
-
-
-FPS = 60            # frames per second
-
-
-# Grid 
-ROWS = 16 
+# Define rows and columns we want in the grid
+ROWS = 20
+COLS_VISIBLE = 25
 MAX_COLS = 150
-TILE_SIZE = SCREEN_HEIGHT // ROWS 
+
+
+# Calculate screen height and width to fit
+SCREEN_WIDTH = COLS_VISIBLE * TILE_SIZE  # 25 * 32 = 800
+SCREEN_HEIGHT = ROWS * TILE_SIZE         # 20 * 32 = 640
+
+# Margins for user interface
+SIDE_MARGIN = 300
+LOWER_MARGIN = 100 
+
+
+# Frames per second
+FPS = 60         
+
 
 # Limit level width 
 MAXIMUM_LEVEL_WIDTH = MAX_COLS * TILE_SIZE
