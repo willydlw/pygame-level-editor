@@ -141,7 +141,22 @@ class Game():
        
 
     def _handle_events(self):
-        # event handling 
+        
+        mx, my = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed() 
+        
+        # Grid Interaction, Continuous Painting
+        if mx < c.SCREEN_WIDTH and my < c.SCREEN_HEIGHT:
+            column = (mx + self.scroll) // c.TILE_SIZE
+            row = my // c.TILE_SIZE 
+
+            if 0 <= row < c.ROWS and 0 <= column < c.MAX_COLS:
+                if mouse_buttons[0]:       # left click to place tile 
+                    self.world_data[row][column] = self.current_tile 
+                elif mouse_buttons[2]: # right click to erase 
+                    self.world_data[row][column] = -1
+
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 
@@ -159,8 +174,6 @@ class Game():
                     self.scroll_right = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = pygame.mouse.get_pos() 
-
                 # Sidebar Selection 
                 if mx > c.SCREEN_WIDTH:
                     # left click selects tile
@@ -183,16 +196,6 @@ class Game():
                                 self.current_tile = index 
                                 logging.info(f"Selected tile index: {index}")
                 
-                # Grid Interaction 
-                elif mx < c.SCREEN_WIDTH and my < c.SCREEN_HEIGHT:
-                    column = (mx + self.scroll) // c.TILE_SIZE
-                    row = my // c.TILE_SIZE 
-
-                    if 0 <= row < c.ROWS and 0 <= column < c.MAX_COLS:
-                        if event.button == 1:       # left click to place tile 
-                            self.world_data[row][column] = self.current_tile 
-                        elif event.button == 3: # right click to erase 
-                            self.world_data[row][column] = -1
 
 
     def run(self):
