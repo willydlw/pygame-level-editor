@@ -22,7 +22,14 @@ MAXIMUM_LEVEL_WIDTH = MAX_COLS * TILE_SIZE
 MAX_SCROLL = MAXIMUM_LEVEL_WIDTH - SCREEN_WIDTH
 
 
-# Tile Codes - Backgroud >= 30
+# Sidebar Tiling
+SIDEBAR_COLS = 3
+SIDEBAR_SLOT_SIZE = 75
+SIDEBAR_PADDING = 50
+   
+
+
+# Tile Codes - Background >= 30
 
 TILE_CODE_DICTIONARY = {
     "empty"     : 30,
