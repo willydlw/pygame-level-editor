@@ -1,10 +1,13 @@
 import pygame 
 import logging 
+import json
 
 
 from .assetManager import AssetManager
+from .button import Button
 from . import constants as c 
 from .tile import Tile 
+from .ui_utils import create_text_button_image
 
 
 # create a logger for this file, named "game" (the filename) 
@@ -47,7 +50,70 @@ class Game():
         AssetManager.load_all(c.ASSETS_CONFIG_PATH)
         logging.info(f"Assets loaded!")
 
+        # button images
+        save_img = AssetManager.get_image("save_btn")
+        load_img = AssetManager.get_image("load_btn")
+        clear_img = create_text_button_image("CLEAR", 120, 40, (200, 50, 50))
 
+        # Position buttons in the lower margin (below the grid)
+        button_y = c.SCREEN_HEIGHT + (c.LOWER_MARGIN // 4) 
+        self.save_button = Button(50,  button_y, save_img)
+        self.load_button = Button(200, button_y, load_img)
+        self.clear_button = Button(350, button_y, clear_img)
+
+        # Create a semi-transparent dark overlay for the whole screen 
+        self.overlay = pygame.Surface(
+            (
+                c.SCREEN_WIDTH + c.SIDE_MARGIN, 
+                c.SCREEN_HEIGHT + c.LOWER_MARGIN
+            ), 
+            pygame.SRCALPHA
+        )
+
+        self.overlay.fill((0, 0, 0, 150)) # semi-transparent black
+
+        # Create the popup box image 
+        self.confirm_panel = create_text_button_image("CLEAR ALL TILES?", 400, 200, (60, 60, 60))
+
+        # create yes/no buttons 
+        yes_img = create_text_button_image("YES", 100, 40, (200, 50, 50))
+        no_img  = create_text_button_image("NO", 100, 40, (100, 100, 100))
+
+        # position them in the center of the screen 
+        center_x = (c.SCREEN_WIDTH + c.SIDE_MARGIN) // 2 
+        center_y = (c.SCREEN_HEIGHT + c.LOWER_MARGIN) // 2 
+
+        self.yes_button = Button(center_x - 110, center_y + 20, yes_img)
+        self.no_button = Button(center_x + 10, center_y + 20, no_img)
+
+        self.show_confirm = False   # show overlay state 
+        self.input_lockout = False 
+
+
+    def clear_level(self):
+        # re-initialize world_data to all -1 
+        self.world_data = [[-1] * c.MAX_COLS for _ in range(c.ROWS)]
+        AssetManager.get_sound("dink").play()
+        logger.info("Level cleared!")
+
+    def save_level(self):
+        try:
+            with open("level_data.json", "w") as f:
+                json.dump(self.world_data, f) 
+            # Play sound on success 
+            AssetManager.get_sound("dink").play() 
+            logger.info("Level saved!")
+        except Exception as e:
+            logger.error(f"Save failed: {e}")
+    
+    def load_level(self):
+        try:
+            with open("level_data.json", "r") as f:
+                self.world_data = json.load(f)
+            AssetManager.get_sound("dink").play()
+            logger.info("Level loaded!")
+        except Exception as e:
+            logger.error(f"Load failed: {e}")
 
     def draw_background(self):
         # clear screen so images don't smear
@@ -117,6 +183,42 @@ class Game():
             
             self.screen.blit(tile_img, (x, y))
 
+        
+    def draw_buttons(self):
+        # draw buttons and check for actions at the same time 
+        if self.save_button.draw(self.screen):
+            self.save_level() 
+
+        if self.load_button.draw(self.screen):
+            self.load_level()
+
+        if self.clear_button.draw(self.screen):
+            self.show_confirm = True 
+        
+    def draw_confirm_popup(self):
+        if self.show_confirm:
+            # draw dark overlay to focus on the popup
+            self.screen.blit(self.overlay, (0,0))
+
+            # draw the main panel box 
+            panel_rect = self.confirm_panel.get_rect(
+                center=((c.SCREEN_WIDTH + c.SIDE_MARGIN) // 2,
+                        (c.SCREEN_HEIGHT + c.LOWER_MARGIN) // 2
+                        )
+            )
+
+            self.screen.blit(self.confirm_panel, panel_rect)
+
+            # draw yes/no buttons and handle clicks 
+            if self.yes_button.draw(self.screen):
+                self.clear_level() 
+                self.show_confirm = False 
+                self.input_lockout = True  # prevent immediate painting
+
+            if self.no_button.draw(self.screen):
+                self.show_confirm = False
+                self.input_lockout = True # prevent immediate painting when popup disappears
+
 
     def draw_world(self):
         for y, row in enumerate(self.world_data):
@@ -141,27 +243,36 @@ class Game():
        
 
     def _handle_events(self):
-        
+
         mx, my = pygame.mouse.get_pos()
         mouse_buttons = pygame.mouse.get_pressed() 
-        
-        # Grid Interaction, Continuous Painting
-        if mx < c.SCREEN_WIDTH and my < c.SCREEN_HEIGHT:
-            column = (mx + self.scroll) // c.TILE_SIZE
-            row = my // c.TILE_SIZE 
 
-            if 0 <= row < c.ROWS and 0 <= column < c.MAX_COLS:
-                if mouse_buttons[0]:       # left click to place tile 
-                    self.world_data[row][column] = self.current_tile 
-                elif mouse_buttons[2]: # right click to erase 
-                    self.world_data[row][column] = -1
+        if not any(mouse_buttons):
+            self.input_lockout = False 
+
+        # Block painting if popup is open
+        if not self.show_confirm and not self.input_lockout:
+            # Grid Interaction, Continuous Painting
+            if mx < c.SCREEN_WIDTH and my < c.SCREEN_HEIGHT:
+                column = (mx + self.scroll) // c.TILE_SIZE
+                row = my // c.TILE_SIZE 
+
+                if 0 <= row < c.ROWS and 0 <= column < c.MAX_COLS:
+                    if mouse_buttons[0]:       # left click to place tile 
+                        self.world_data[row][column] = self.current_tile 
+                    elif mouse_buttons[2]: # right click to erase 
+                        self.world_data[row][column] = -1
 
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 
 
+           
             if event.type == pygame.KEYDOWN:
+                 # Handle Escape key to close popup
+                if event.key == pygame.K_ESCAPE:
+                    self.show_confirm = False
                 if event.key == pygame.K_LEFT:
                     self.scroll_left = True 
                 if event.key == pygame.K_RIGHT:
@@ -174,45 +285,52 @@ class Game():
                     self.scroll_right = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # Sidebar Selection 
-                if mx > c.SCREEN_WIDTH:
-                    # left click selects tile
-                    if event.button == 1:
-                        col = (mx - c.SCREEN_WIDTH - c.SIDEBAR_PADDING) // c.SIDEBAR_SLOT_SIZE
-                        row = (my - c.SIDEBAR_PADDING) // c.SIDEBAR_SLOT_SIZE 
-                        index = col + (row * c.SIDEBAR_COLS) 
+                # Block sidebar selection if popup is open
+                if not self.show_confirm:
+                    # Sidebar Selection 
+                    if mx > c.SCREEN_WIDTH:
+                        # left click selects tile
+                        if event.button == 1:
+                            col = (mx - c.SCREEN_WIDTH - c.SIDEBAR_PADDING) // c.SIDEBAR_SLOT_SIZE
+                            row = (my - c.SIDEBAR_PADDING) // c.SIDEBAR_SLOT_SIZE 
+                            index = col + (row * c.SIDEBAR_COLS) 
 
-                        if 0 <= index < len(AssetManager._tiles):
-                            # calculate the EXACT 32x32 area for that specific tile to 
-                            # avoid a ghost index for selecting padded area 
-                            tile_x = c.SCREEN_WIDTH + (col * c.SIDEBAR_SLOT_SIZE) + c.SIDEBAR_PADDING
-                            tile_y = (row * c.SIDEBAR_SLOT_SIZE) + c.SIDEBAR_PADDING 
-                            
-                            # create a temporary rectangle 
-                            tile_rect = pygame.Rect(tile_x, tile_y, c.TILE_SIZE, c.TILE_SIZE)
+                            if 0 <= index < len(AssetManager._tiles):
+                                # calculate the EXACT 32x32 area for that specific tile to 
+                                # avoid a ghost index for selecting padded area 
+                                tile_x = c.SCREEN_WIDTH + (col * c.SIDEBAR_SLOT_SIZE) + c.SIDEBAR_PADDING
+                                tile_y = (row * c.SIDEBAR_SLOT_SIZE) + c.SIDEBAR_PADDING 
+                                
+                                # create a temporary rectangle 
+                                tile_rect = pygame.Rect(tile_x, tile_y, c.TILE_SIZE, c.TILE_SIZE)
 
-                            # only select if mouse is inside that tile rect area 
-                            if tile_rect.collidepoint(mx, my):
-                                self.current_tile = index 
-                                logging.info(f"Selected tile index: {index}")
+                                # only select if mouse is inside that tile rect area 
+                                if tile_rect.collidepoint(mx, my):
+                                    self.current_tile = index 
+                                    logging.info(f"Selected tile index: {index}")
                 
-
 
     def run(self):
         while self.running:
             self._handle_events() 
 
-            # limit scrolling to left to not go beyond x = 0 
+            # Scroll logic 
             if self.scroll_left == True and self.scroll > 0:
                 self.scroll -= 5 
             if self.scroll_right == True and self.scroll < c.MAX_SCROLL:
                 self.scroll += 5
 
-            # draw the scrolling background
+            # Background and world 
             self.draw_background()
             self.draw_world()
             self.draw_grid()
+
+            # UI panels
             self.draw_side_panel()
+            self.draw_buttons()     # draw margin buttons 
+
+            # Popup (must be last to be on top)
+            self.draw_confirm_popup()
 
             # update the display 
             pygame.display.flip() 
