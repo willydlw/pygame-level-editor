@@ -19,7 +19,8 @@ class NullSound:
 
 class AssetManager:
     # Define class-level dictionaries (static variables)
-    _images = {} 
+    _images = {}
+    _tiles = []         # separate list for index-based access 
     _fonts = {}
     _sounds = {} 
 
@@ -34,7 +35,7 @@ class AssetManager:
 
         # load json configuration file 
         try:
-            # join BASE_DIR wiht the config_path provided 
+            # join BASE_DIR with the config_path provided 
             full_config_path = BASE_DIR / config_path 
             with open(full_config_path, 'r') as f:
                 config = json.load(f)
@@ -42,7 +43,7 @@ class AssetManager:
             logger.error(f"Failed to load config at {full_config_path}. Error: {e}")
             return 
         
-        # Load images 
+        # Load background and button images
         for name, data in config.get("images", {}).items():
             if isinstance(data, dict):
                 path = data.get("path")
@@ -63,15 +64,40 @@ class AssetManager:
 
             cls._images[name] = img 
 
+        # Load tile images 
+        tile_config = config.get("tiles", {})
+        if tile_config:
+            folder = Path(tile_config["folder"])
+            count = tile_config["count"]
+            size = tile_config["scale"]
+            
+            for i in range(count):
+                path = BASE_DIR / folder / f"{i}.png"
+                img = cls._safe_load_image(path)
+                img = pygame.transform.scale(img, size)
+                cls._tiles.append(img)
+
          # Load fonts 
         for name, data in config.get("fonts", {}).items():
-            full_path = BASE_DIR / data.get("path", "")
-            cls._fonts[name] = cls._safe_load_font(full_path, data.get("size", 24))
+            if isinstance(data, dict):
+                path = data.get("path", "")
+                size = data.get("size", 24)
+            else:
+                path = data 
+                size = 24 
+
+            full_path = BASE_DIR / path 
+            cls._fonts[name] = cls._safe_load_font(full_path, size)
 
         # Load sounds 
         for name, data in config.get("sounds", {}).items():
-            full_path = BASE_DIR / data.get("path", "")
-            cls.sounds[name] = cls._safe_load_sound(full_path)
+            if isinstance(data, dict):
+                path = data.get("path", "")
+            else:
+                path = data 
+
+            full_path = BASE_DIR / path
+            cls._sounds[name] = cls._safe_load_sound(full_path)
 
 
     @staticmethod 
@@ -116,6 +142,10 @@ class AssetManager:
     def get_image(cls, name):
         return cls._images.get(name)
     
+    @classmethod 
+    def get_tile(cls, index):
+        return cls._tiles[index] if 0 <= index < len(cls._tiles) else None
+    
     @classmethod
     def get_font(cls, name):
         return cls._fonts.get(name)
@@ -125,7 +155,6 @@ class AssetManager:
         """Retrieves a sound; returns NullSound if key doesn't exist"""
         return cls._sounds.get(name, NullSound())
    
-
     @classmethod
     def __str__(cls):
         summary = [f"AssetManager Status:"]
